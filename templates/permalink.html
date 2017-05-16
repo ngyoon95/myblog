@@ -1,0 +1,10 @@
+<!-- JINJA2 BASE TEMPLATES -->
+{% extends "base.html" %}
+
+{% block content %}
+
+{{post.render() | safe}}
+
+{% endblock %}
+
+

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="/static/bootstrap.css" />
+    <link type="text/css" rel="stylesheet" href="/static/main.css" />
+
+    <title>Yoon's Blog</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <footer>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="login-area">
+              {% if user %}
+                <p>Login as: {{user.name}}</p>      
+                <a class="login-link" href="/home">Home</a>
+                | 
+                <a class="login-link" href="/newpost">New Post</a>
+                | 
+                <a class="login-link" href="/logout">Logout</a>
+              {% else %}
+<!--                 <a class="login-home" href="/">Home</a> 
+                | -->
+                <a class="login-link" href="/login">Login</a>
+                |
+                <a class="login-link" href="/signup">Signup</a>
+              {% endif %}
+            </div>
+          </div> 
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <p><span class="main-title">Yoon's Multi User Blog</span></p>
+          </div>
+        </div>
+      </footer>
+
+        <div class="row">
+          <div class="col-md-12">
+            <div id="content">
+            {% block content %}
+            {% endblock %}
+            </div>
+          </div>
+        </div> 
+        
+    </div> 
+  </body>
+</html>
+

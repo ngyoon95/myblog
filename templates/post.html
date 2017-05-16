@@ -1,0 +1,30 @@
+
+<div class="post">
+  <div class="post-heading">
+  
+    <div class="post-author">
+      Author: {{p.author_name}}
+    </div>
+
+    <div class="post-title">
+      Subject: {{p.subject}}
+    </div>
+
+    <div class="post-content">
+      Post: {{p._render_text | safe}}
+    </div>
+
+    <div class="post-date">
+      Date posted: {{p.created.strftime("%d%b%Y, %A, %I:%M%p")}}
+    </div>
+
+    <br>
+    <div class="post-action">
+      <input type="button" onclick="location.href='/post/editpost/{{p.key().id()}}';" value="Edit"/>
+      <input type="button" onclick="location.href='/post/deletepost/{{p.key().id()}}';" value="Delete"/>
+    </div>
+
+  </div>
+</div>
+
+

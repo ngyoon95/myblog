@@ -1,0 +1,33 @@
+<!-- JINJA2 BASE TEMPLATES -->
+{% extends "base.html" %}
+
+{% block content %}
+
+  <h2>Edit Blog Post</h2>
+  
+    <form method="post">
+      <label>
+        <div>Subject *</div>
+          <input type="text" name="subject" value="{{subject}}">
+      </label>
+
+      <label>
+        <div>Blog Content *</div>
+          <textarea name="content">{{content}}</textarea>
+      </label>
+
+      <div class="require">
+        <p><span class="require">*</span>- required </p>
+      </div>
+
+      <div class="post-action">
+        <input type="submit" class="btn btn-primary" name="submit" value="Submit">
+        <input type="button" onclick="location.href='/';" value="Cancel">
+      </div>
+
+		  <div class="error">{{error}}</div>
+    </form>
+
+{% endblock %}
+
+
