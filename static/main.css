@@ -106,7 +106,7 @@ input [type=submit], [type=button] {
     color: white;
 }
 
-.post-title {
+.post-title, .post-delete{
     font-weight: bold;
 }
 
@@ -117,10 +117,6 @@ input [type=submit], [type=button] {
 
 .post-action {
     color:black;
-}
-
-.post-date, .post-title  {
-     margin-top: 5px;
 }
 
 .header {

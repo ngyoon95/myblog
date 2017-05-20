@@ -3,10 +3,22 @@
 
 {% block content %}
 
-  <div class="post-delete">
-    Deleted information as below: {{post.render() | safe}}
-  </div>
+    <div class="post-delete">
+    Deleted information as below: 
+    </div>
 
-  <div class="error">{{error}}</div>
+    <br><div class="post-author">
+      Author: {{post.author_name}}
+    </div>
+
+    <div class="post-title">
+      Subject: {{post.subject}}
+    </div>
+
+    <div class="post-content">
+      Post: {{post.content}}
+    </div><br>
+
+   <div class="error">{{error}}</div>
 
 {% endblock %}

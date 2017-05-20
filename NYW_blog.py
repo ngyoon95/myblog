@@ -201,7 +201,8 @@ class NewPost(BlogHandler):
 
     def post(self):
         if not self.user:
-            self.redirect('/home')
+            self.redirect('/login')
+            return
 
         user_id = self.user.key().id(),    
         author_name = self.user.name
@@ -310,43 +311,50 @@ class EditPost(BlogHandler):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
-        if post is not None:
-            if post.user_id == self.user.key().id():
-                self.render("editpost.html", subject=post.subject, content=post.content)
+        if self.user:
+            if post is not None:
+                if post.user_id == self.user.key().id():
+                    self.render("editpost.html", subject=post.subject, content=post.content)
+                else:
+                    error = "You do not have access to edit this post."
+                    self.render('front.html', error=error)
             else:
-                error = "You do not have access to edit this post."
-                self.render("front.html", error=error)
+                error = "This post does not exist."
+                self.render('front.html', error=error)        
         else:
-            error = "This post does not exist."
-            self.render("front.html", error=error)        
+            self.redirect('/login')        
 
     def post(self, post_id):
         subject = self.request.get('subject')
         content = self.request.get('content')
-
+        posts = db.GqlQuery("select * from Post order by created desc limit 20")
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
-        if post.user_id == self.user.key().id():
-            if subject and content:
-                key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-                post = db.get(key)
+        if self.user:
+            if post.user_id == self.user.key().id():
                 if post:
                     post.subject = subject
                     post.content = content
                     post.put()
                     self.redirect('/post/%s' % post_id)
+                    if subject and content:
+                        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+                        post = db.get(key)
+                    else:
+                        error = "Please input your subject and content !"
+                        self.render("editpost.html", subject=subject,
+                                content=content, error=error)                        
                 else:
                     error = "This post does not exist."
                     self.render("front.html", author_name = self.user.name,
                     posts=posts, error=error)
             else:
-                error = "Please input your subject and content !"
-                self.render("editpost.html", subject=subject,
-                            content=content, error=error)
-        else:
-            error = "You do not have access to edit this post."
-            self.render("front.html", error=error)
+                error = "You do not have access to edit this post."
+                self.render("front.html", error=error)
+        else:    
+            self.redirect('/login')  
+
 
 class DeletePost(BlogHandler):
     """ Delete Post Handler """  
@@ -355,18 +363,20 @@ class DeletePost(BlogHandler):
         key = db.Key.from_path('Post', int(post_id) , parent=blog_key())
         post = db.get(key)
 
-        if post is not None:
-            if post.user_id == self.user.key().id():
-                post.delete()
-                error = "Your post has been deleted."
-                self.render("deletepost.html", error=error, post=post)
+        if self.user:
+            if post is not None:
+                if post.user_id == self.user.key().id():
+                    post.delete()
+                    error = "Your post has been deleted."
+                    self.render("deletepost.html", error=error, post=post)
+                else:
+                    error = "You do not have access to delete this post."
+                    self.render("front.html", error=error)
             else:
-                error = "You do not have access to delete this post."
+                error = "This post does not exist."
                 self.render("front.html", error=error)
-        else:
-            error = "This post does not exist."
-            self.render("front.html", error=error)
-
+        else:    
+            self.redirect('/login') 
 
 ##### To experience with ROT13 #####
 
