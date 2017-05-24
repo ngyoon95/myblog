@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+           <h2>Edit comment</h2>
+            
+            <form action="" method="post">
+            <label>   
+            <div class="post-editcomment">Comment *</div>
+                <textarea class="form-control" name="comment" value="{{comment}}">{{comment}}</textarea>
+                
+                <div class="form-group">
+                    <p><span class="require">*</span> Required fields</p>
+                </div>
+                
+<!--                 <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        Submit -->
+                <input type="submit" class="btn btn-primary" name="submit" value="Submit">        
+                <input type="button" class="btn btn-primary" name="cancel" value="Cancel" onClick="history.go(-1);return true;">       
+                <br> 
+<!--                     </button>
+                        <a href="/dashboard" name="cancel" class="btn btn-default">Cancel</a>
+                </div> -->
+                {% if error %}
+                    <div class="error">{{error}}</div>
+                {% endif %}
+            </form>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

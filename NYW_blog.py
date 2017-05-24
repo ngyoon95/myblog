@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import datetime
 import webapp2
+import time
 from string import letters
 
 # import jinja2 library
@@ -21,19 +22,6 @@ jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                autoescape = True)
 
 secret = '!dwsg#@kjsdc&*vs&)~#'
-
-# REGEX, regular expression and requirement for user signup
-USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
-def valid_username(username):
-    return username and USER_RE.match(username)
-
-PASS_RE = re.compile(r"^.{5,20}$")
-def valid_password(password):
-    return password and PASS_RE.match(password) 
-
-EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
-def valid_email(email):
-    return not email or EMAIL_RE.match(email)
 
 def render_str(template, **params):
     """ Pass parameters into template """
@@ -117,6 +105,19 @@ def users_key(group = 'default'):
     """ Define key for users group """
     return db.Key.from_path('users', group)
 
+#####   User Login Decorator    #####
+def login_required(func):
+    """
+    A decorator to confirm a user is logged in or redirect as needed.
+    """
+    def login(self, *args, **kwargs):
+        # Redirect to login if user not logged in, else execute func.
+        if not self.user:
+            self.redirect("/login")
+        else:
+            func(self, *args, **kwargs)
+    return login
+
 class User(db.Model):
     """ Database to store users data """
     name = db.StringProperty(required = True)
@@ -161,11 +162,39 @@ class Post(db.Model):
     author_name = db.StringProperty(required=True)
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
+    likes = db.IntegerProperty(default = 0)
 
     def render(self):
         """ Insert line breaks in post content """
         self._render_text = self.content.replace('\n', '<br>')
         return render_str('post.html', p = self)
+
+class Comment(db.Model):
+    """ Database to store post comments """
+    comment = db.StringProperty(required=True)
+    post = db.StringProperty(required=True)
+    commentor = db.StringProperty(required=True)
+    user_id = db.IntegerProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    last_modified = db.DateTimeProperty(auto_now = True)
+    
+    #Retrieve total number of comments for post
+    @classmethod
+    def count_by_post_id(cls, post_id):
+        c = Comment.all().filter('post =', post_id)
+        return c.count()
+
+    #Display all comments for a post
+    @classmethod
+    def all_by_post_id(cls, post_id):
+        c = Comment.all().filter('post =', post_id).order('-created')
+        return c
+
+class Like(db.Model):
+    """ Database to store post likes """
+    post_id = db.IntegerProperty(required = True)
+    user_id = db.IntegerProperty(required=True)
+
 
 class Main(BlogHandler):
     """ Main Page Handler """
@@ -175,6 +204,7 @@ class Main(BlogHandler):
 
 class BlogFront(BlogHandler):
     """ Blog Front Page Handler """
+    @login_required
     def get(self):
         """ Retrieve all the last 20 blog posts """
         posts = db.GqlQuery("select * from Post order by created desc limit 20")
@@ -182,23 +212,36 @@ class BlogFront(BlogHandler):
 
 class PostPage(BlogHandler):
     """ Post Page Handler """
+    @login_required
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
         if not post:
-            self.error(404)
-            return
-        self.render('permalink.html', post = post)
+            return self.error(404)
+        #Retrieve comment information
+        comments = Comment.all_by_post_id(post_id)
+        comments_count = Comment.count_by_post_id(post_id)
+
+        if not post:
+            return self.error(404)
+
+        self.render("permalink.html", post=post,
+                    comments_count=comments_count,
+                    comments=comments)
+
 
 class NewPost(BlogHandler):
     """ New Post Handler """
+    @login_required
     def get(self):
         if self.user:
+
             self.render('newpost.html')
         else:
             self.redirect('/login')
 
+    @login_required
     def post(self):
         if not self.user:
             self.redirect('/login')
@@ -221,12 +264,26 @@ class NewPost(BlogHandler):
             error = "Please input your subject and content !"
             self.render('newpost.html', subject=subject, content=content, error=error)
 
+
 class Signup(BlogHandler):
     """ Signup Handler """    
     def get(self):
         self.render('signup-form.html')
 
     def post(self):
+        # REGEX, regular expression and requirement for user signup
+        USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+        def valid_username(username):
+            return username and USER_RE.match(username)
+
+        PASS_RE = re.compile(r"^.{5,20}$")
+        def valid_password(password):
+            return password and PASS_RE.match(password) 
+
+        EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
+        def valid_email(email):
+            return not email or EMAIL_RE.match(email)
+
         have_error = False
         self.username = self.request.get('username')
         self.password = self.request.get('password')
@@ -259,6 +316,7 @@ class Signup(BlogHandler):
     def done(self, *a, **kw):
         raise NotImplementedError
 
+
 class Register(Signup):
     def done(self):
         """ Check if user already exist """
@@ -271,6 +329,7 @@ class Register(Signup):
             u.put()
             self.login(u)
             self.redirect('/welcome')
+
 
 class Login(BlogHandler):
     """ Login Handler """       
@@ -289,11 +348,13 @@ class Login(BlogHandler):
             msg = 'Invalid login'
             self.render('login-form.html', error = msg)
 
+
 class Logout(BlogHandler):
     """ Login Handler """  
     def get(self):
         self.logout()
         self.redirect('/login')
+
 
 class Welcome(BlogHandler):
     """ Welcome Handler """  
@@ -304,8 +365,10 @@ class Welcome(BlogHandler):
         else:
             self.redirect('/signup')
 
+
 class EditPost(BlogHandler):
-    """ Edit Post Handler """  
+    """ Edit Post Handler """ 
+    @login_required 
     def get(self, post_id):
         posts = db.GqlQuery("select * from Post order by created desc limit 20")
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
@@ -317,47 +380,48 @@ class EditPost(BlogHandler):
                     self.render("editpost.html", subject=post.subject, content=post.content)
                 else:
                     error = "You do not have access to edit this post."
-                    self.render('front.html', error=error)
+                    self.render("front.html", error=error)
             else:
                 error = "This post does not exist."
                 self.render('front.html', error=error)        
         else:
             self.redirect('/login')        
 
-    def post(self, post_id):
+    @login_required 
+    def post(self, post_id):          
         subject = self.request.get('subject')
         content = self.request.get('content')
-        posts = db.GqlQuery("select * from Post order by created desc limit 20")
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
         if self.user:
             if post.user_id == self.user.key().id():
-                if post:
-                    post.subject = subject
-                    post.content = content
-                    post.put()
-                    self.redirect('/post/%s' % post_id)
-                    if subject and content:
-                        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-                        post = db.get(key)
+                if subject and content:
+                    key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+                    post = db.get(key)
+                    if post:
+                        post.subject = subject
+                        post.content = content
+                        post.put()
+                        self.redirect('/post/%s' % post_id)
                     else:
-                        error = "Please input your subject and content !"
-                        self.render("editpost.html", subject=subject,
-                                content=content, error=error)                        
+                        error = "This post does not exist."
+                        self.render("front.html", author_name = self.user.name,
+                        posts=posts, error=error)
                 else:
-                    error = "This post does not exist."
-                    self.render("front.html", author_name = self.user.name,
-                    posts=posts, error=error)
+                    error = "Please input your subject and content !"
+                    self.render("editpost.html", subject=subject,
+                                content=content, error=error)
             else:
                 error = "You do not have access to edit this post."
-                self.render("front.html", error=error)
-        else:    
-            self.redirect('/login')  
+                self.render("front.html", error=error) 
+        else:
+            self.redirect('/login')      
 
 
 class DeletePost(BlogHandler):
     """ Delete Post Handler """  
+    @login_required
     def get(self, post_id):
         posts = db.GqlQuery("select * from Post order by created desc limit 20")
         key = db.Key.from_path('Post', int(post_id) , parent=blog_key())
@@ -377,6 +441,129 @@ class DeletePost(BlogHandler):
                 self.render("front.html", error=error)
         else:    
             self.redirect('/login') 
+
+
+class NewComment(BlogHandler):
+    """ New Comment handler """
+    @login_required
+    def post (self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        if not post:
+            self.error(404)
+            return
+        
+        comment = self.request.get('comment')
+
+        if comment:
+            c = Comment(comment=comment, post=post_id,
+                        user_id = self.user.key().id(),
+                        commentor = self.user.name)
+            c.put()
+            # For GAE Database slow update
+            time.sleep(0.1)
+            self.redirect('/post/%s' % post_id)
+
+
+class EditComment(BlogHandler):
+    """ Edit Comment handler """
+    @login_required
+    def get(self, post_id, comment_id):
+        post = Post.get_by_id(int(post_id))
+        comment = Comment.get_by_id(int(comment_id))
+        comments = Comment.all_by_post_id(post_id)
+        comments_count = Comment.count_by_post_id(post_id)
+
+        if comment:
+            if comment and comment.user_id == self.user.key().id():
+                self.render("editcomment.html", comment=comment.comment)
+            else:
+                error = "You can only edit your own comment."
+                self.render("front.html", error=error)
+        else:
+            error = "This comment does not exist."
+            self.render("front.html", error=error)
+
+
+    @login_required
+    def post(self, post_id, comment_id):
+        post = Post.get_by_id(int(post_id))
+        comment = Comment.get_by_id(int(comment_id))
+        if comment:
+            #Retrieve comment information
+            comments = Comment.all_by_post_id(post_id)
+            comments_count = Comment.count_by_post_id(post_id)
+
+            if comment.user_id == self.user.key().id():
+                comment_content = self.request.get("comment")
+                if comment_content:
+                    comment.comment = comment_content
+                    comment.put()
+                    # For GAE Database slow update
+                    time.sleep(0.1)
+                    self.redirect('/post/%s' % post_id)
+                else:
+                    error = "Please enter a comment."
+                    self.render(
+                        "editcomment.html",
+                    comment=comment.comment, error=error)
+        else:
+            error = "This comment does not exist."
+            self.render("front.html", error=error)
+
+
+class DeleteComment(BlogHandler):
+    """ Delete Comment handler """
+    @login_required
+    def get(self, post_id, comment_id):
+        post = Post.get_by_id(int(post_id))
+        comment = Comment.get_by_id(int(comment_id))
+        comments = Comment.all_by_post_id(post_id)
+        comments_count = Comment.count_by_post_id(post_id)
+
+        if comment:
+            if comment.user_id == self.user.key().id():
+                comment.delete()
+                error = "Your comment has been deleted."
+                self.render("deletecomment.html", error=error)
+            else:
+                error = "You can only delete your own comment."
+                self.render("front.html", error=error)
+        else:
+            error = "This comment does not exist."
+            self.render("front.html", error=error)
+
+
+class LikePost(BlogHandler):
+    # """ Like handler """
+    @login_required
+    def get(self, post_id):
+        key = db.Key.from_path('Post', int(post_id) , parent=blog_key())
+        post = db.get(key)
+
+        user_id = self.user.key().id()    
+        if post:
+            if not post.user_id == self.user.key().id():
+                like  = Like.all().filter(
+                    'post_id =', int(post_id)).filter('user_id =', user_id)
+                if(like.get()):
+                    like[0].delete()
+                    post.likes = post.likes - 1
+                    post.put()
+                    self.redirect('/post/%s' % post_id)
+                else:
+                    like = Like(post_id = int(post_id), user_id= user_id)
+                    like.put()
+                    post.likes = post.likes + 1
+                    post.put()
+                    self.redirect('/post/%s' % post_id)
+            else:
+                error = "You cannot like your own post."
+                self.render("front.html", error = error)
+        else:
+            error = "This post does not exist."
+            self.render("front.html", error=error)
+
 
 ##### To experience with ROT13 #####
 
@@ -403,6 +590,10 @@ app = webapp2.WSGIApplication([('/', Main),
                                ('/welcome', Welcome),
                                ('/post/editpost/([0-9]+)', EditPost),
                                ('/post/deletepost/([0-9]+)', DeletePost),  
+                               ("/post/([0-9]+)/newcomment", NewComment),
+                               ("/post/([0-9]+)/comment/([0-9]+)/edit", EditComment),
+                               ("/post/([0-9]+)/comment/([0-9]+)/delete", DeleteComment),
+                               ("/post/([0-9]+)/like", LikePost),
                                ('/rot13', Rot13),
                                ],
                               debug=True)

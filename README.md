@@ -31,8 +31,10 @@ Refer to below web site for more information:
 - The information of the user, subject and contents will be display in this blog.
 - All the posted items will be display and stored in database.
 - The previous blogs were sorted by latest created date first for the first 20posts.
-- Upon login, you are able to edit and delete your own post ONLY.
-- Once deleted post, you will be promt error "This post does not exist" if you edit/delete the same posted-id.
+- Post: Login user can Edit and Delete their own post ONLY.
+- Comment: Login user can Edit and Delete their own comment ONLY. Can Post comments to any users. 
+- Like: Login user can ONLY like other users post but not their OWN post.
+- Once deleted post and comment, you will be promt error "This post does not exist" if you edit/delete the same posted-id.
 
 5.0 TESTING THIS BLOG PAGE
 - Please follow the link at http://myblog-167810.appspot.com/ to test a live version.

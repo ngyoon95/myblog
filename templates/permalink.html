@@ -5,6 +5,51 @@
 
 {{post.render() | safe}}
 
+          <br>
+          <div>
+            <div class="pull-right">
+                <a href="/post/{{post.key().id()}}/like">
+                  <button type="submit" class="btn-primary"> Like - {{post.likes}}</button>  
+                </a>   
+            </div>
+            <br>
+          </div>
+
+ 			    <hr>
+        	<div class="post-comment">Comment</div>
+            	<form method="post" action="/post/{{ post.key().id() }}/newcomment">
+                	<textarea class="form-control" name="comment" placeholder="Input your comment here"></textarea>
+                	<br>
+                	<button type="submit" class="btn btn-primary"> Post Comment </button>
+            	</form>            
+
+        	<br>
+          <br>
+        	<div>
+          		{% if comments_count == 1 %}
+            	  <b><label>{{comments_count}} comment below</label></b>
+          		{% else %}
+              	<b><label>{{comments_count}} comments below</label></b>
+          		{% endif %}
+          	</div>	
+          		{% for c in comments %}
+          	
+            <div class="posted-comment">
+            <hr>  
+            	<i>By commentator : {{c.commentor}} on {{c.created.strftime("%d%b%Y, %A, %I:%M%p")}} </i>
+            	<br>
+            	Comments: {{c.comment}}
+              	<br>
+            
+                <div class="post-action">
+                	<br>
+                	<input type="button" onclick="location.href='/post/{{post.key().id()}}/comment/{{c.key().id()}}/edit';" value="Edit"/>
+                	<input type="button" onclick="location.href='/post/{{post.key().id()}}/comment/{{c.key().id()}}/delete';" value="Delete"/>
+                  </div>
+                  <br>
+	          </div>
+          		{% endfor %}        
+
 {% endblock %}
 
 

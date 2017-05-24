@@ -1,5 +1,5 @@
 body {
-    background-color: black;
+    background-color: #4682b4;
     padding: 10px;
 }
 
@@ -49,8 +49,8 @@ h2 {
 }
 
 label {
-  display: block;
-  font-size: 15px;
+    display: block;
+    font-size: 15px;
 }
 
 label + label {
@@ -65,14 +65,14 @@ input[type=text] {
 }
 
 textarea {
-  width: 600px;
-  height: 400px;
-  font-size: 15px;
-  font-family: monospace;
+    width: 600px;
+    height: 400px;
+    font-size: 15px;
+    font-family: monospace;
 }
 
 input [type=submit], [type=button] {
-  font-size: 15px;
+    font-size: 15px;
 }
 
 .main-title {
@@ -88,8 +88,8 @@ input [type=submit], [type=button] {
 
 .post   {
     padding: 5px;
-    color: black;
-    background-color:green;
+    color: white;
+    background-color:black;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;
@@ -106,7 +106,13 @@ input [type=submit], [type=button] {
     color: white;
 }
 
-.post-title, .post-delete{
+.post-title, .post-delete, .post-comment{
+    font-weight: bold;
+}
+
+.post-title-ref {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 18px;
     font-weight: bold;
 }
 
@@ -117,6 +123,24 @@ input [type=submit], [type=button] {
 
 .post-action {
     color:black;
+}
+
+.posted-comment {
+    font-size: 12px;
+    color:white;
+    background-color: green;
+    padding-left: 10px;
+}
+
+.form-control {
+    width: 600px;
+    height: 150px;
+    font-size: 15px;
+    font-family: monospace;    
+}
+
+.home {
+    font-size: 25px;     
 }
 
 .header {

@@ -2,12 +2,13 @@
 <div class="post">
   <div class="post-heading">
   
-    <div class="post-author">
-      Author: {{p.author_name}}
+    <br>
+    <div class="post-title-ref">
+    <a href="/post/{{p.key().id()}}" style="color:#00FF00" >Subject: {{p.subject}}</a>
     </div>
 
-    <div class="post-title">
-      Subject: {{p.subject}}
+    <div class="post-author">
+      Author: {{p.author_name}}
     </div>
 
     <div class="post-content">
@@ -23,8 +24,8 @@
       <input type="button" onclick="location.href='/post/editpost/{{p.key().id()}}';" value="Edit"/>
       <input type="button" onclick="location.href='/post/deletepost/{{p.key().id()}}';" value="Delete"/>
     </div>
+    <br> 
 
   </div>
 </div>
-
 
